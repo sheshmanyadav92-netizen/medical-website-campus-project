@@ -1,28 +1,16 @@
-## 🔗 Live Demo
-https://huggingface.co/spaces/Avimanyu8008/medtriage-env
+# 🏥 AI Medical Triage System (OpenEnv RL Project)
 
-# 🏥 AI Medical Triage System (OpenEnv RL Project
+This project follows OpenEnv-style environment design with tasks, rewards, and an evaluation loop.
+It is an educational prototype, not a diagnostic tool or a clinically validated triage service.
 
-This project follows OpenEnv-style environment design with tasks, reward, and evaluation loop.
-
-## 👋 Hi, I’m Krishna
-
-This project started as a simple idea:
-**“Can we build a system that thinks like a first-level doctor?”**
-
-Not to replace doctors — but to **quickly classify cases as emergency vs non-emergency** and guide users.
-
-But I didn’t stop there.
-
-I turned this into an **RL-style evaluation system using OpenEnv**, where:
+It demonstrates a rule-first symptom classification environment where:
 
 * the AI *acts like an agent*
 * patient symptoms are *inputs*
 * decisions are *actions*
 * correctness is *rewarded*
 
-So this is not just an app —
-👉 it’s a **mini AI environment with grading + scoring**
+The code is derived from the MIT-licensed [ai-medical-triage project](https://github.com/engineerkrish/ai-medical-triage); see [LICENSE](LICENSE) for the required notice.
 
 ---
 
@@ -44,11 +32,11 @@ We need a **fast triage layer** that:
 
 # 💡 Solution
 
-I built a system that:
+The system:
 
 1. Takes **natural language symptoms**
-2. Applies **rule-based reasoning (fast + reliable)**
-3. Uses **LLM for explanation (human-like thinking)**
+2. Applies **conservative rule-based triage**
+3. Uses an optional LLM for supplementary explanations; the deterministic rules own urgency and advice
 4. Classifies into:
 
    * Emergency 🚨
@@ -67,7 +55,7 @@ Most people built:
 ❌ Chatbots
 ❌ Simple symptom checkers
 
-I built:
+This project provides:
 
 👉 **A complete AI evaluation environment**
 
@@ -108,9 +96,9 @@ This project follows OpenEnv principles:
 | Requirement | Implementation            |
 | ----------- | ------------------------- |
 | Environment | `inference.py`            |
-| Tasks       | Defined inside code       |
+| Tasks       | `inference.py`            |
 | Agent       | `run_model()`             |
-| Actions     | Emergency / Non-emergency |
+| Actions     | Emergency / Clinical review / Non-emergency |
 | Reward      | 0 or 1                    |
 | Evaluation  | Final score               |
 
@@ -118,30 +106,20 @@ This project follows OpenEnv principles:
 
 # ⚙️ How it works (simple)
 
-### Step 1: Rule-based decision
+### Step 1: Check predefined emergency warning signs
 
-Fast logic for safety:
-
-* chest pain → emergency
-* breathing issue → emergency
-* fever → non-emergency
-
-👉 This ensures **reliability**
+Predefined emergency warning signs always take priority. Only a narrow allowlist
+of fever/headache phrases is classified as non-emergency; unknown or mixed
+symptoms are sent for clinical review. These prototype rules are incomplete and
+do not guarantee safety.
 
 ---
 
-### Step 2: LLM explanation
+### Step 2: Optional LLM explanation
 
-Using:
-
-* Qwen 2.5 (via HuggingFace)
-
-It explains:
-
-* WHY the decision was made
-* Like a real doctor
-
-👉 This adds **intelligence + trust**
+The model can only provide a supplementary explanation for allowlisted
+non-emergency phrases. It is disabled by default and never controls the final
+decision or advice. Emergency cases bypass the model entirely.
 
 ---
 
@@ -151,12 +129,12 @@ It explains:
 [START]
 Patient symptoms: ...
 
-Step 1: Analyze symptoms  
-Step 2: ...
+Step 1: Check predefined emergency warning signs
+Step 2: Apply the conservative rule-based triage policy
 
 Explanation: ...
 
-Final: Emergency / Non-emergency  
+Final: Emergency / Clinical review / Non-emergency
 Advice: ...
 
 [END]
@@ -170,10 +148,10 @@ Example:
 
 ```
 Input: fever  
-Expected: non-emergency  
+Expected: Non-emergency
 Reward: 1  
 
-Final Score: 4/4
+Final Score: 5/5
 ```
 
 👉 This turns the project into a **testable AI system**
@@ -194,38 +172,25 @@ Final Score: 4/4
 
 ### 🔴 Hard
 
-* long natural language inputs
-* multiple mixed symptoms
-* real-world messy descriptions
+* mixed symptoms and instruction-injection examples
 
-👉 The system handles ALL of them.
-
----
-
-# 🖥️ UI (Gradio)
-
-* Simple interface
-* Enter symptoms
-* Get instant decision
-
-Built using:
-
-* Gradio
-* HuggingFace Spaces
+Unmatched or complex inputs require clinical review; the system does not claim
+to handle all real-world symptoms.
 
 ---
 
 # 📂 Project Structure
 
 ```
-MedTriageEnvs/
-│
-├── app.py              # UI
-├── inference.py       # Core logic + RL tasks
-├── openenv.yaml       # Environment config
-├── requirements.txt   # Dependencies
-├── env/               # Modular structure
-├── tasks/             # Task definitions
+inference.py                   # Rule-based classifier, output, grading, tasks
+triage_prompts.py              # Optional explanation prompt
+benchmark.py                   # Reproducible synthetic rule-only benchmark
+server/app.py                  # FastAPI/OpenEnv scaffold
+tasks/__init__.py              # Tasks package
+tests/test_triage.py           # Offline unit tests
+docs/safety-evaluation.md      # Guardrails, benchmark, prompt, feedback template
+openenv.yaml                   # Environment configuration
+requirements.txt               # Runtime dependencies
 ```
 
 ---
@@ -234,17 +199,26 @@ MedTriageEnvs/
 
 ```bash
 pip install -r requirements.txt
-python app.py
+python inference.py
 ```
+
+Run the deterministic benchmark and unit tests:
+
+```bash
+python benchmark.py
+python -m unittest discover -s tests -v
+```
+
+See [Safety policy and evaluation](docs/safety-evaluation.md) for guardrails,
+the prompt artifact, benchmark scope, and the user-validation feedback template.
 
 ---
 
-# 🔥 Why this project stands out
+# 🔥 Project scope
 
-### 1. Not just UI — full system
+### 1. Rule-first evaluation system
 
-Most submissions stop at frontend
-👉 This has backend + logic + evaluation
+The project combines triage rules with a reproducible synthetic evaluation suite.
 
 ---
 
@@ -261,10 +235,11 @@ Even without full RL training:
 
 ---
 
-### 3. Safe + practical
+### 3. Conservative prototype
 
-* Rule-based core (no hallucination risk)
-* LLM only for explanation
+* Rule-based final decision and advice
+* Optional LLM explanation is supplementary and disabled by default
+* Not clinically validated; seek professional care for concerning symptoms
 
 ---
 
@@ -278,43 +253,24 @@ Can be extended to:
 
 ---
 
-### 5. Real-world impact
+### 5. Limitations
 
-This is not a toy project.
-
-👉 This can actually be used as:
-
-* hospital triage assistant
-* telemedicine pre-check system
+This is an educational prototype and is not ready for hospital, telemedicine,
+or other clinical use.
 
 ---
 
-# 📌 What I learned
+# 📌 Project goals
 
-* How to combine **rules + LLM**
-* How to design **evaluation systems**
-* How to think like an **AI system designer**
-* How to structure projects for **real-world use**
-
----
-
-# 🏁 Final Thought
-
-I didn’t just build an app.
-
-I built a **mini AI system that can be tested, evaluated, and improved like a real model.**
-
-That’s what makes this project different.
+* Demonstrate **rules with optional LLM explanations**
+* Make behavior measurable with **synthetic evaluation cases**
+* Document **guardrails, limitations, and validation needs**
 
 ---
 
-## 👨‍💻 Built by
+# 🏁 Limitations
 
-**TEAM : Attack on Titan**
-
-## 👨‍💻 Team Members
-**Avimanyu**
-**Krishna**
-
+The system uses a small, incomplete keyword ruleset and has not been clinically
+validated. It is not intended for real-world medical triage or treatment decisions.
 
 ---
