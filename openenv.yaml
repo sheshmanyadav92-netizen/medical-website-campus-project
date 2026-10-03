@@ -1,0 +1,43 @@
+name: medtriage-env
+version: 1.0
+
+description: >
+  A real-world medical triage simulation where an AI agent interacts
+  with a patient, gathers symptoms, and determines urgency level.
+
+tasks:
+  - easy
+  - medium
+  - hard
+
+observation_space:
+  type: object
+  properties:
+    patient_message:
+      type: string
+      description: Initial patient complaint
+    patient_reply:
+      type: string
+      description: Patient response after agent action
+    asked:
+      type: array
+      items:
+        type: string
+      description: List of symptoms already checked
+
+action_space:
+  type: object
+  properties:
+    action_type:
+      type: string
+      enum: ["check_symptom", "final"]
+    content:
+      type: string
+
+reward_range: [0.0, 1.0]
+
+episode:
+  max_steps: 8
+  termination:
+    - final_decision
+    - max_steps_reached

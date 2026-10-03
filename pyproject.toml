@@ -1,0 +1,17 @@
+[project]
+name = "ai-medical-triage"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "openai",
+]
+
+[project.scripts]
+openenv-server = "server.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+

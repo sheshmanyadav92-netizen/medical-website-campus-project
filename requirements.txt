@@ -1,0 +1,6 @@
+gradio
+openai
+pydantic
+pyyaml
+fastapi
+uvicorn
